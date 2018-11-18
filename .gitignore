@@ -1,3 +1,5 @@
 .ve
 .mypy_cache
 mypy-report
+*.egg-info
+__pycache__

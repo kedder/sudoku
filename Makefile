@@ -1,16 +1,23 @@
+VEBIN = .ve/bin
+
 all: mypy
 
 .PHONY: mypy
 mypy:
-	.ve/bin/mypy src/sudoku/sudoku.py \
+	$(VEBIN)/mypy src/sudoku/ \
+		--no-incremental \
 		--junit-xml mypy-report/mypy-junit.xml \
 		--html-report mypy-report
 
 .PHONY: run
 run:
-	.ve/bin/python src/sudoku/sudoku.py
+	$(VEBIN)/python src/sudoku/solver.py
 
 .PHONY: virtualenv
 virtualenv:
 	virtualenv -p python3 .ve
-	.ve/bin/pip install mypy lxml
+	$(VEBIN)/pip install -r requirements.txt
+
+.PHONY: serve
+serve:
+	FLASK_APP=src/sudoku/webapp.py $(VEBIN)/flask run
