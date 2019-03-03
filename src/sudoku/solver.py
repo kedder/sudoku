@@ -88,6 +88,18 @@ PROBLEM_EVIL = """
 5 0 0 9 6 0 8 0 0
 """
 
+PROBLEM_DIABOLICAL = """
+0 7 0 2 5 0 4 0 0
+8 0 0 0 0 0 9 0 3
+0 0 0 0 0 3 0 7 0
+7 0 0 0 0 4 0 2 0
+1 0 0 0 0 0 0 0 7
+0 4 0 5 0 0 0 0 8
+0 9 0 6 0 0 0 0 0
+4 0 1 0 0 0 0 0 5
+0 0 7 0 8 2 0 3 0
+"""
+
 
 class UnsolvableSudoku(Exception):
     pass
@@ -241,7 +253,7 @@ class Solver(interfaces.ISolver):
 
 
 def main() -> None:
-    problem = Problem.parse(PROBLEM_EVIL)
+    problem = Problem.parse(PROBLEM_DIABOLICAL)
     print("Initial problem:")
     problem.print()
 
