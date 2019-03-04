@@ -1,105 +1,10 @@
+import sys
 from copy import deepcopy
 from typing import List, Set, Tuple, Iterator
 
 from sudoku import interfaces
 
 # See http://lipas.uwasa.fi/~timan/sudoku/ for sample problems
-PROBLEM_EASY = """
-0 5 0 0 1 0 0 4 0
-1 0 7 0 0 0 6 0 2
-0 0 0 9 0 5 0 0 0
-2 0 8 0 3 0 5 0 1
-0 4 0 0 7 0 0 2 0
-9 0 1 0 8 0 4 0 6
-0 0 0 4 0 1 0 0 0
-3 0 4 0 0 0 7 0 9
-0 2 0 0 6 0 0 1 0
-"""
-
-PROBLEM_MEDIUM = """
-0 0 0 0 0 0 0 8 5
-0 0 0 2 1 0 0 0 9
-9 6 0 0 8 0 1 0 0
-5 0 0 8 0 0 0 1 6
-0 0 0 0 0 0 0 0 0
-8 9 0 0 0 6 0 0 7
-0 0 9 0 7 0 0 5 2
-3 0 0 0 5 4 0 0 0
-4 8 0 0 0 0 0 0 0
-"""
-
-PROBLEM_HARD = """
-3 8 0 0 0 0 0 0 0
-0 0 0 4 0 0 7 8 5
-0 0 9 0 2 0 3 0 0
-0 6 0 0 9 0 0 0 0
-8 0 0 3 0 2 0 0 9
-0 0 0 0 4 0 0 7 0
-0 0 1 0 7 0 5 0 0
-4 9 5 0 0 6 0 0 0
-0 0 0 0 0 0 0 9 2
-"""
-
-PROBLEM_GA_E = """
-0 0 0 0 5 9 0 2 0
-0 9 0 7 4 0 0 0 0
-4 0 6 0 0 1 9 0 8
-0 1 7 0 2 0 5 0 0
-8 0 0 0 0 5 7 0 2
-0 0 0 0 0 3 0 4 1
-5 8 0 6 0 0 0 0 0
-9 3 4 0 0 0 2 8 0
-0 6 1 0 0 2 0 0 0
-"""
-
-PROBLEM_GA_H = """
-0 0 0 8 1 5 4 0 0
-1 0 5 0 0 0 0 3 0
-0 0 0 0 0 4 0 0 1
-0 1 9 0 0 0 0 8 0
-0 6 0 4 0 0 0 0 0
-2 0 8 7 9 0 0 0 0
-0 0 1 0 0 0 0 4 3
-8 0 0 0 0 0 2 9 7
-0 0 6 0 0 2 0 0 0
-"""
-
-PROBLEM_AI_ESCARGOT = """
-1 0 0 0 0 7 0 9 0
-0 3 0 0 2 0 0 0 8
-0 0 9 6 0 0 5 0 0
-0 0 5 3 0 0 9 0 0
-0 1 0 0 8 0 0 0 2
-6 0 0 0 0 4 0 0 0
-3 0 0 0 0 0 0 1 0
-0 4 0 0 0 0 0 0 7
-0 0 7 0 0 0 3 0 0
-"""
-
-PROBLEM_EVIL = """
-0 0 3 0 8 9 0 0 4
-9 0 0 0 0 2 0 5 0
-6 0 0 0 0 0 0 0 0
-0 0 5 1 0 0 0 8 0
-3 1 0 0 0 0 0 9 2
-0 7 0 0 0 3 1 0 0
-0 0 0 0 0 0 0 0 1
-0 8 0 7 0 0 0 0 9
-5 0 0 9 6 0 8 0 0
-"""
-
-PROBLEM_DIABOLICAL = """
-0 7 0 2 5 0 4 0 0
-8 0 0 0 0 0 9 0 3
-0 0 0 0 0 3 0 7 0
-7 0 0 0 0 4 0 2 0
-1 0 0 0 0 0 0 0 7
-0 4 0 5 0 0 0 0 8
-0 9 0 6 0 0 0 0 0
-4 0 1 0 0 0 0 0 5
-0 0 7 0 8 2 0 3 0
-"""
-
 
 class UnsolvableSudoku(Exception):
     pass
@@ -252,8 +157,14 @@ class Solver(interfaces.ISolver):
                 yield (x, y)
 
 
+def load_problem(fname: str) -> Problem:
+    with open(fname, 'r') as f:
+        probstr = f.read()
+    return Problem.parse(probstr)
+
+
 def main() -> None:
-    problem = Problem.parse(PROBLEM_DIABOLICAL)
+    problem = load_problem(sys.argv[1])
     print("Initial problem:")
     problem.print()
 
