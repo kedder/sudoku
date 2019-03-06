@@ -7,10 +7,36 @@ struct Problem {
     options: [[[u8; 9]; 9]; 9]
 }
 
-#[derive(Debug)]
-struct Coord {
-    x: usize,
-    y: usize
+struct EmptyCells<'a> {
+    problem: &'a Problem,
+    curx: usize,
+    cury: usize
+}
+
+impl<'a> EmptyCells<'a> {
+    fn new(problem: &Problem) -> EmptyCells {
+        EmptyCells{problem, curx: 0, cury: 0}
+    }
+}
+
+impl<'a> Iterator for EmptyCells<'a> {
+    type Item = (usize, usize);
+    fn next(&mut self) -> Option<(usize, usize)> {
+        while self.curx != 9 {
+            let res = (self.curx, self.cury);
+            let val = self.problem.get(self.curx, self.cury);
+            // println!("TRYING {},{}", self.curx, self.cury);
+            self.cury += 1;
+            if self.cury == 9 {
+                self.cury = 0;
+                self.curx += 1;
+            }
+            if val == 0 {
+                return Some(res);
+            }
+        }
+        None
+    }
 }
 
 impl Problem {
@@ -80,6 +106,10 @@ impl Problem {
             }
         }
         cnt
+    }
+
+    fn iter_empty_coords(&self) -> EmptyCells {
+        EmptyCells::new(self)
     }
 
     // Problem is solved when all the cells are filled
@@ -157,16 +187,18 @@ fn solve(mut problem: Problem) -> Result<Problem, String> {
     Ok(problem)
 }
 
+
 fn fork(problem: Problem) -> Result<Problem, String> {
-    let empties = get_empty_coords(&problem);
-    let first = &empties[0];
+    // println!("Forking");
+    let (fx, fy) = problem.iter_empty_coords().next().unwrap();
+    // println!("First{}, {}", fx, fy);
     for n in 0..9 {
-        let candidate = problem.options[first.x][first.y][n];
+        let candidate = problem.options[fx][fy][n];
         if candidate == 0 {
             continue
         }
         let mut attempt = problem.clone();
-        attempt.set(first.x, first.y, candidate).unwrap();
+        attempt.set(fx, fy, candidate).unwrap();
         match solve(attempt) {
             Err(_err) => continue,
             Ok(solved) => return Ok(solved)
@@ -177,30 +209,18 @@ fn fork(problem: Problem) -> Result<Problem, String> {
 
 fn get_trivial_moves(problem: &Problem) -> Vec<(usize, usize, u8)> {
     let mut moves = Vec::new();
-    for coord in get_empty_coords(problem) {
-        if problem.count_options(coord.x, coord.y) != 1 {
+    for (x, y) in problem.iter_empty_coords() {
+        if problem.count_options(x, y) != 1 {
             continue;
         }
-        let opts = problem.options[coord.x][coord.y];
+        let opts = problem.options[x][y];
         for n in 0..9 {
             if opts[n] != 0 {
-                moves.push((coord.x, coord.y, opts[n]))
+                moves.push((x, y, opts[n]))
             }
         }
     }
     moves
-}
-
-fn get_empty_coords(problem: &Problem) -> Vec<Coord> {
-    let mut empties = Vec::new();
-    for x in 0..9 {
-        for y in 0..9 {
-            if problem.get(x, y) == 0 {
-                empties.push(Coord{x, y});
-            }
-        }
-    }
-    empties
 }
 
 fn read_problem(filename: &String) -> Problem {
