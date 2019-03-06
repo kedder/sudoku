@@ -26,17 +26,20 @@ impl Problem {
     }
 
     fn set(&mut self, x: usize, y: usize, value: u8) -> Result<(), String> {
-        let mut coords: Vec<Coord> = Vec::new();
+        let mut coords = [(0, 0); 9*3];
+        let mut curcoord = 0;
         // verify by column
         for ty in 0..9 {
-            coords.push(Coord{x, y: ty});
+            coords[curcoord] = (x, ty);
+            curcoord += 1;
             if self.get(x, ty) == value {
                 return Err(format!("Value {} is already in the column {}", value, x));
             }
         }
         // verify by row
         for tx in 0..9 {
-            coords.push(Coord{x: tx, y});
+            coords[curcoord] = (tx, y);
+            curcoord += 1;
             if self.get(tx, y) == value {
                 return Err(format!("Value {} is already in the row {}", value, y));
             }
@@ -46,7 +49,8 @@ impl Problem {
         let sy = y / 3;
         for tx in sx * 3..sx*3+3 {
             for ty in sy * 3..sy*3+3 {
-                coords.push(Coord{x: tx, y: ty});
+                coords[curcoord] = (tx, ty);
+                curcoord += 1;
                 if self.get(tx, ty) == value {
                     return Err(format!(
                         "Value {} is already in sector ({}, {})", value, sx, sy));
@@ -57,8 +61,8 @@ impl Problem {
         self.data[x][y] = value;
 
         // Remove option from relevant cells
-        for coord in &coords {
-            self.remove_option(coord.x, coord.y, value);
+        for (x, y) in &coords {
+            self.remove_option(*x, *y, value);
         }
         Ok(())
     }
