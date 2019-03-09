@@ -8,9 +8,10 @@ import "errors"
 import "fmt"
 
 type problem struct {
-	data    [9 * 9]int
-	options [9 * 9][9]int
-	coords  [9*3]coord
+	data      [9 * 9]int
+	options   [9 * 9][9]int
+	optcounts [9 * 9]int
+	coords    [9 * 3]coord
 }
 
 type coord struct {
@@ -28,6 +29,9 @@ func NewProblem() *problem {
 	p := problem{}
 	for i, _ := range p.options {
 		p.options[i] = [9]int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	}
+	for i, _ := range p.optcounts {
+		p.optcounts[i] = 9
 	}
 	return &p
 }
@@ -88,26 +92,15 @@ func (p *problem) GetOptions(x int, y int) *[9]int {
 }
 
 func (p *problem) CountOptions(x int, y int) int {
-	cnt := 0
-	// opts := p.GetOptions(x, y)
-	idx := x*9 + y
-	for n := 0; n<9; n++ {
-		if p.options[idx][n] != 0 {
-			cnt++;
-		}
-	}
-	return cnt
+	return p.optcounts[x*9+y]
 }
 
 func (p *problem) removeOption(x int, y int, v int) {
-	p.options[x*9 + y][v-1] = 0
-	// idx := x*9 + y
-	// opts := p.options[idx]
-	// for n, opt := range opts {
-	// 	if opt == v {
-	// 		p.options[idx] = append(opts[:n], opts[n+1:]...)
-	// 	}
-	// }
+	have_opt := p.options[x*9+y][v-1] != 0
+	if have_opt {
+		p.optcounts[x*9+y]--
+		p.options[x*9+y][v-1] = 0
+	}
 }
 
 // Problem is solved when all the cells are filled
@@ -200,13 +193,14 @@ func ReadProblem(filename string) *problem {
 
 func Solve(p *problem) (*problem, error) {
 	for !p.IsSolved() {
-		moves := getTrivialMoves(p)
-		if len(moves) == 0 {
-			// No trivial moves are left. We have to solve by trials and
-			// errors.
-			return fork(p)
-		}
-		for _, mv := range moves {
+		nexttrivial := genTrivialMoves(p)
+		lentrivial := 0
+		for {
+			mv, havemore := nexttrivial()
+			if !havemore {
+				break
+			}
+			lentrivial++
 			if err := p.Set(mv.crd.x, mv.crd.y, mv.value); err != nil {
 				fmt.Print(p.Format())
 				panic(err)
@@ -214,6 +208,12 @@ func Solve(p *problem) (*problem, error) {
 			if !p.IsSolvable() {
 				return p, errors.New("Cannot solve")
 			}
+
+		}
+		if lentrivial == 0 {
+			// No trivial moves are left. We have to solve by trials and
+			// errors.
+			return fork(p)
 		}
 	}
 	return p, nil
@@ -237,21 +237,24 @@ func fork(p *problem) (*problem, error) {
 	return p, errors.New("Cannot solve")
 }
 
-func getTrivialMoves(p *problem) []move {
-	moves := []move{}
+func genTrivialMoves(p *problem) func() (*move, bool) {
 	empties := getEmptyCoords(p)
-	for _, crd := range empties {
-		if p.CountOptions(crd.x, crd.y) != 1 {
-			continue
-		}
-		for _, opt := range p.GetOptions(crd.x, crd.y) {
-			if opt != 0 {
-				moves = append(moves, move{crd, opt})
-				break;
+	countempties := len(empties)
+	cur := 0
+	return func() (*move, bool) {
+		for ; cur < countempties; cur++ {
+			crd := empties[cur]
+			if p.CountOptions(crd.x, crd.y) != 1 {
+				continue
+			}
+			for _, opt := range p.GetOptions(crd.x, crd.y) {
+				if opt != 0 {
+					return &move{crd, opt}, true
+				}
 			}
 		}
+		return nil, false
 	}
-	return moves
 }
 
 func getEmptyCoords(p *problem) []coord {
@@ -273,9 +276,9 @@ func main() {
 	fmt.Print(problem.Format())
 
 	copied := problem.Copy()
-	solved, _ := Solve(copied);
+	solved, _ := Solve(copied)
 
-	for i:= 0; i<0; i++ {
+	for i := 0; i < 0; i++ {
 		copied := problem.Copy()
 		_, err := Solve(copied)
 		if err != nil {
