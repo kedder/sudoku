@@ -208,7 +208,7 @@ fn fork(problem: Problem) -> Result<Problem, String> {
 }
 
 fn get_trivial_moves(problem: &Problem) -> Vec<(usize, usize, u8)> {
-    let mut moves = Vec::new();
+    let mut moves = Vec::with_capacity(9);
     for (x, y) in problem.iter_empty_coords() {
         if problem.count_options(x, y) != 1 {
             continue;
@@ -247,7 +247,16 @@ fn main() {
     let problem = read_problem(&args[1]);
     println!("Initial problem:");
     print!("{}", problem.format());
-    let solved = solve(problem).unwrap();
+
+    let copied = problem.clone();
+    let solved = solve(copied).unwrap();
+
+    // Now solve it several more times for benchmark
+    for _i in 0..0 {
+        let copied = problem.clone();
+        solve(copied).unwrap();
+    }
+
     println!("Solved problem:");
     print!("{}", solved.format());
 }

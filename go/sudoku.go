@@ -248,10 +248,17 @@ func main() {
 	fmt.Println("Initial problem:")
 	fmt.Print(problem.Format())
 
-	fmt.Println("Solved problem:")
-	solved, err := Solve(problem)
-	if err != nil {
-		panic("Cannot solve this sudoku")
+	copied := problem.Copy()
+	solved, _ := Solve(copied);
+
+	for i:= 0; i<0; i++ {
+		copied := problem.Copy()
+		_, err := Solve(copied)
+		if err != nil {
+			panic("Cannot solve this sudoku")
+		}
+
 	}
+	fmt.Println("Solved problem:")
 	fmt.Print(solved.Format())
 }
