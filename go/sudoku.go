@@ -9,7 +9,8 @@ import "fmt"
 
 type problem struct {
 	data    [9 * 9]int
-	options [9 * 9][]int
+	options [9 * 9][9]int
+	coords  [9*3]coord
 }
 
 type coord struct {
@@ -26,7 +27,7 @@ func NewProblem() *problem {
 	// set only specific field value with field key
 	p := problem{}
 	for i, _ := range p.options {
-		p.options[i] = []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+		p.options[i] = [9]int{1, 2, 3, 4, 5, 6, 7, 8, 9}
 	}
 	return &p
 }
@@ -37,11 +38,12 @@ func (p *problem) Get(x int, y int) int {
 }
 
 func (p *problem) Set(x int, y int, v int) error {
-	coords := []coord{}
-
+	// coords := []coord{}
+	curcoord := 0
 	// verify by column
 	for ty := 0; ty < 9; ty++ {
-		coords = append(coords, coord{x, ty})
+		p.coords[curcoord] = coord{x, ty}
+		curcoord++
 		if p.Get(x, ty) == v {
 			return errors.New(fmt.Sprintf("Value %d is already in the column %d", v, x))
 		}
@@ -49,7 +51,8 @@ func (p *problem) Set(x int, y int, v int) error {
 
 	// verify by row
 	for tx := 0; tx < 9; tx++ {
-		coords = append(coords, coord{tx, y})
+		p.coords[curcoord] = coord{tx, y}
+		curcoord++
 		if p.Get(tx, y) == v {
 			return errors.New(fmt.Sprintf("Value %d is already in the row %d", v, y))
 		}
@@ -60,7 +63,8 @@ func (p *problem) Set(x int, y int, v int) error {
 	for tx := sx * 3; tx < sx*3+3; tx++ {
 		for ty := sy * 3; ty < sy*3+3; ty++ {
 			// fmt.Println("Checking %s, %s")
-			coords = append(coords, coord{tx, ty})
+			p.coords[curcoord] = coord{tx, ty}
+			curcoord++
 			if p.Get(tx, ty) == v {
 				return errors.New(fmt.Sprintf("Value %d is already in the sector (%d, %d)", v, sx, sy))
 			}
@@ -72,25 +76,38 @@ func (p *problem) Set(x int, y int, v int) error {
 	p.data[idx] = v
 
 	// remove v from options of any relevant cell
-	for _, c := range coords {
+	for _, c := range p.coords {
 		p.removeOption(c.x, c.y, v)
 	}
 	return nil
 }
 
-func (p *problem) GetOptions(x int, y int) []int {
+func (p *problem) GetOptions(x int, y int) *[9]int {
 	idx := x*9 + y
-	return p.options[idx]
+	return &p.options[idx]
+}
+
+func (p *problem) CountOptions(x int, y int) int {
+	cnt := 0
+	// opts := p.GetOptions(x, y)
+	idx := x*9 + y
+	for n := 0; n<9; n++ {
+		if p.options[idx][n] != 0 {
+			cnt++;
+		}
+	}
+	return cnt
 }
 
 func (p *problem) removeOption(x int, y int, v int) {
-	idx := x*9 + y
-	opts := p.options[idx]
-	for n, opt := range opts {
-		if opt == v {
-			p.options[idx] = append(opts[:n], opts[n+1:]...)
-		}
-	}
+	p.options[x*9 + y][v-1] = 0
+	// idx := x*9 + y
+	// opts := p.options[idx]
+	// for n, opt := range opts {
+	// 	if opt == v {
+	// 		p.options[idx] = append(opts[:n], opts[n+1:]...)
+	// 	}
+	// }
 }
 
 // Problem is solved when all the cells are filled
@@ -111,8 +128,7 @@ func (p *problem) IsSolvable() bool {
 		for y := 0; y < 9; y++ {
 			if p.Get(x, y) == 0 {
 				// empty cell
-				opts := p.GetOptions(x, y)
-				if len(opts) == 0 {
+				if p.CountOptions(x, y) == 0 {
 					// no options available here, problem is not solvable
 					return false
 				}
@@ -124,10 +140,10 @@ func (p *problem) IsSolvable() bool {
 
 func (p problem) Copy() *problem {
 	copied := p
-	// copy all the options
-	for i, opts := range p.options {
-		copied.options[i] = append([]int{}, opts...)
-	}
+	// // copy all the options
+	// for i, opts := range p.options {
+	// 	copied.options[i] = append([9]int{}, opts...)
+	// }
 	return &copied
 }
 
@@ -208,6 +224,9 @@ func fork(p *problem) (*problem, error) {
 	first := empties[0]
 	opts := p.GetOptions(first.x, first.y)
 	for _, candidate := range opts {
+		if candidate == 0 {
+			continue
+		}
 		attempt := p.Copy()
 		attempt.Set(first.x, first.y, candidate)
 		solved, err := Solve(attempt)
@@ -222,16 +241,21 @@ func getTrivialMoves(p *problem) []move {
 	moves := []move{}
 	empties := getEmptyCoords(p)
 	for _, crd := range empties {
-		opts := p.GetOptions(crd.x, crd.y)
-		if len(opts) == 1 {
-			moves = append(moves, move{crd, opts[0]})
+		if p.CountOptions(crd.x, crd.y) != 1 {
+			continue
+		}
+		for _, opt := range p.GetOptions(crd.x, crd.y) {
+			if opt != 0 {
+				moves = append(moves, move{crd, opt})
+				break;
+			}
 		}
 	}
 	return moves
 }
 
 func getEmptyCoords(p *problem) []coord {
-	res := []coord{}
+	res := make([]coord, 0, 40)
 	for x := 0; x < 9; x++ {
 		for y := 0; y < 9; y++ {
 			if p.Get(x, y) == 0 {
