@@ -2,15 +2,13 @@ import sys
 from copy import deepcopy
 from typing import List, Set, Tuple, Iterator
 
-from sudoku import interfaces
-
 # See http://lipas.uwasa.fi/~timan/sudoku/ for sample problems
 
 class UnsolvableSudoku(Exception):
     pass
 
 
-class Problem(interfaces.IProblem):
+class Problem:
     _data: List[List[int]]
     _options: List[List[Set[int]]]
 
@@ -20,7 +18,7 @@ class Problem(interfaces.IProblem):
                          for y in range(9)]
 
     @classmethod
-    def parse(cls, raw: str) -> interfaces.IProblem:
+    def parse(cls, raw: str) -> "Problem":
         p = Problem()
         lines = raw.strip().split("\n")
         for y, line in enumerate(lines):
@@ -75,7 +73,7 @@ class Problem(interfaces.IProblem):
         return all(self._options[y][x] for x in range(9) for y in range(9)
                     if not self.get(x, y))
 
-    def copy(self) -> interfaces.IProblem:
+    def copy(self) -> "Problem":
         c = Problem()
         c._data = deepcopy(self._data)
         c._options = deepcopy(self._options)
@@ -103,11 +101,11 @@ class Problem(interfaces.IProblem):
         print(self.format())
 
 
-class Solver(interfaces.ISolver):
-    def __init__(self, problem: interfaces.IProblem):
+class Solver:
+    def __init__(self, problem: Problem):
         self.problem = problem
 
-    def solve(self) -> interfaces.IProblem:
+    def solve(self) -> Problem:
         while not self.problem.is_solved():
             moves = self._get_trivial_moves()
             if not moves:
@@ -121,7 +119,7 @@ class Solver(interfaces.ISolver):
 
         return self.problem
 
-    def _fork(self) -> interfaces.IProblem:
+    def _fork(self) -> Problem:
         # Find first cell with options
         x, y = next(self._get_empty_coords())
         opts = self.problem.get_options(x, y)
