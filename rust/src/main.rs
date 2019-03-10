@@ -4,7 +4,8 @@ use std::fs;
 #[derive(Debug, Clone)]
 struct Problem {
     data: [[u8; 9]; 9],
-    options: [[[u8; 9]; 9]; 9]
+    options: [[[u8; 9]; 9]; 9],
+    optcounts: [[u8; 9]; 9],
 }
 
 struct EmptyCells<'a> {
@@ -43,7 +44,8 @@ impl Problem {
     fn new() -> Problem {
         Problem {
             data: [[0; 9]; 9],
-            options: [[[1, 2, 3, 4, 5, 6, 7, 8, 9]; 9]; 9]
+            options: [[[1, 2, 3, 4, 5, 6, 7, 8, 9]; 9]; 9],
+            optcounts: [[9; 9]; 9],
         }
     }
 
@@ -94,18 +96,15 @@ impl Problem {
     }
 
     fn remove_option(&mut self, x: usize, y: usize, value: u8) {
-        self.options[x][y][(value - 1) as usize] = 0;
+        let optidx = (value - 1) as usize;
+        if self.options[x][y][optidx] != 0 {
+            self.optcounts[x][y] -= 1;
+            self.options[x][y][optidx] = 0;
+        }
     }
 
-    fn count_options(&self, x: usize, y: usize) -> usize {
-        let opts = self.options[x][y];
-        let mut cnt: usize = 0;
-        for i in 0..9 {
-            if opts[i] != 0 {
-                cnt += 1;
-            }
-        }
-        cnt
+    fn count_options(&self, x: usize, y: usize) -> u8 {
+        return self.optcounts[x][y];
     }
 
     fn iter_empty_coords(&self) -> EmptyCells {
