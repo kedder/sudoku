@@ -95,6 +95,29 @@ func (p *problem) CountOptions(x int, y int) byte {
 	return p.optcounts[x*9+y]
 }
 
+func (p *problem) GetMinimumOptionsCoord() coord {
+	var mincount byte
+	mincount = 9
+	mincoord := coord{0, 0}
+	for x := 0; x < 9; x++ {
+		for y := 0; y < 9; y++ {
+			if p.Get(x, y) != 0 {
+				continue
+			}
+			count := p.CountOptions(x, y)
+			if count == 2 {
+				// We are not going to find anything better than this, shortcut
+				return coord{x, y}
+			}
+			if count < mincount {
+				mincount = count
+				mincoord = coord{x, y}
+			}
+		}
+	}
+	return mincoord
+}
+
 func (p *problem) removeOption(x int, y int, v byte) {
 	have_opt := p.options[x*9+y][v-1] != 0
 	if have_opt {
@@ -220,9 +243,9 @@ func Solve(p *problem) (*problem, error) {
 }
 
 func fork(p *problem) (*problem, error) {
-	empties := getEmptyCoords(p)
-	first := empties[0]
+	first := p.GetMinimumOptionsCoord()
 	opts := p.GetOptions(first.x, first.y)
+
 	for _, candidate := range opts {
 		if candidate == 0 {
 			continue
@@ -276,7 +299,10 @@ func main() {
 	fmt.Print(problem.Format())
 
 	copied := problem.Copy()
-	solved, _ := Solve(copied)
+	solved, err := Solve(copied)
+	if err != nil {
+		panic(err)
+	}
 
 	for i := 0; i < 0; i++ {
 		copied := problem.Copy()

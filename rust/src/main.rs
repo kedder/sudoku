@@ -111,6 +111,23 @@ impl Problem {
         EmptyCells::new(self)
     }
 
+    fn get_minimum_options_coord(&self) -> (usize, usize) {
+        let mut minimum = (0, 0);
+        let mut mincount = 9 as u8;
+        for (x, y) in self.iter_empty_coords() {
+            let count = self.count_options(x, y);
+            if count == 2 {
+                // We are not going to find anything better than this, shortcut
+                return (x, y);
+            }
+            if  count < mincount {
+                mincount = count;
+                minimum = (x, y);
+            }
+        }
+        minimum
+    }
+
     // Problem is solved when all the cells are filled
     fn is_solved(&self) -> bool {
         for x in 0..9 {
@@ -189,8 +206,7 @@ fn solve(mut problem: Problem) -> Result<Problem, String> {
 
 fn fork(problem: Problem) -> Result<Problem, String> {
     // println!("Forking");
-    let (fx, fy) = problem.iter_empty_coords().next().unwrap();
-    // println!("First{}, {}", fx, fy);
+    let (fx, fy) = problem.get_minimum_options_coord();
     for n in 0..9 {
         let candidate = problem.options[fx][fy][n];
         if candidate == 0 {
