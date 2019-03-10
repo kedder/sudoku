@@ -8,9 +8,9 @@ import "errors"
 import "fmt"
 
 type problem struct {
-	data      [9 * 9]int
-	options   [9 * 9][9]int
-	optcounts [9 * 9]int
+	data      [9 * 9]byte
+	options   [9 * 9][9]byte
+	optcounts [9 * 9]byte
 	coords    [9 * 3]coord
 }
 
@@ -21,14 +21,14 @@ type coord struct {
 
 type move struct {
 	crd   coord
-	value int
+	value byte
 }
 
 func NewProblem() *problem {
 	// set only specific field value with field key
 	p := problem{}
 	for i, _ := range p.options {
-		p.options[i] = [9]int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+		p.options[i] = [9]byte{1, 2, 3, 4, 5, 6, 7, 8, 9}
 	}
 	for i, _ := range p.optcounts {
 		p.optcounts[i] = 9
@@ -36,12 +36,12 @@ func NewProblem() *problem {
 	return &p
 }
 
-func (p *problem) Get(x int, y int) int {
+func (p *problem) Get(x int, y int) byte {
 	idx := x*9 + y
 	return p.data[idx]
 }
 
-func (p *problem) Set(x int, y int, v int) error {
+func (p *problem) Set(x int, y int, v byte) error {
 	// coords := []coord{}
 	curcoord := 0
 	// verify by column
@@ -86,16 +86,16 @@ func (p *problem) Set(x int, y int, v int) error {
 	return nil
 }
 
-func (p *problem) GetOptions(x int, y int) *[9]int {
+func (p *problem) GetOptions(x int, y int) *[9]byte {
 	idx := x*9 + y
 	return &p.options[idx]
 }
 
-func (p *problem) CountOptions(x int, y int) int {
+func (p *problem) CountOptions(x int, y int) byte {
 	return p.optcounts[x*9+y]
 }
 
-func (p *problem) removeOption(x int, y int, v int) {
+func (p *problem) removeOption(x int, y int, v byte) {
 	have_opt := p.options[x*9+y][v-1] != 0
 	if have_opt {
 		p.optcounts[x*9+y]--
@@ -152,7 +152,7 @@ func (p *problem) Format() string {
 				if n == 0 {
 					return " "
 				}
-				return strconv.Itoa(n)
+				return strconv.Itoa(int(n))
 			}
 
 			out += fmt.Sprintf("%s %s %s | %s %s %s | %s %s %s\n",
@@ -182,7 +182,7 @@ func ReadProblem(filename string) *problem {
 			if err != nil {
 				panic(err)
 			}
-			p.Set(x, y, num)
+			p.Set(x, y, byte(num))
 		}
 		if y == 8 {
 			break
