@@ -6,6 +6,8 @@ struct Problem {
     data: [[u8; 9]; 9],
     options: [[[u8; 9]; 9]; 9],
     optcounts: [[u8; 9]; 9],
+    coords: [(usize, usize); 9*3],
+
 }
 
 struct EmptyCells<'a> {
@@ -46,6 +48,7 @@ impl Problem {
             data: [[0; 9]; 9],
             options: [[[1, 2, 3, 4, 5, 6, 7, 8, 9]; 9]; 9],
             optcounts: [[9; 9]; 9],
+            coords: [(0, 0); 9*3],
         }
     }
 
@@ -54,11 +57,11 @@ impl Problem {
     }
 
     fn set(&mut self, x: usize, y: usize, value: u8) -> Result<(), String> {
-        let mut coords = [(0, 0); 9*3];
+        // let mut coords = [(0, 0); 9*3];
         let mut curcoord = 0;
         // verify by column
         for ty in 0..9 {
-            coords[curcoord] = (x, ty);
+            self.coords[curcoord] = (x, ty);
             curcoord += 1;
             if self.get(x, ty) == value {
                 return Err(format!("Value {} is already in the column {}", value, x));
@@ -66,7 +69,7 @@ impl Problem {
         }
         // verify by row
         for tx in 0..9 {
-            coords[curcoord] = (tx, y);
+            self.coords[curcoord] = (tx, y);
             curcoord += 1;
             if self.get(tx, y) == value {
                 return Err(format!("Value {} is already in the row {}", value, y));
@@ -77,7 +80,7 @@ impl Problem {
         let sy = y / 3;
         for tx in sx * 3..sx*3+3 {
             for ty in sy * 3..sy*3+3 {
-                coords[curcoord] = (tx, ty);
+                self.coords[curcoord] = (tx, ty);
                 curcoord += 1;
                 if self.get(tx, ty) == value {
                     return Err(format!(
@@ -89,8 +92,9 @@ impl Problem {
         self.data[x][y] = value;
 
         // Remove option from relevant cells
-        for (x, y) in &coords {
-            self.remove_option(*x, *y, value);
+        for n in 0..9*3 {
+            let (x, y) = self.coords[n];
+            self.remove_option(x, y, value);
         }
         Ok(())
     }
