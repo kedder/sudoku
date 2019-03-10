@@ -256,18 +256,41 @@ fn read_problem(filename: &String) -> Problem {
     problem
 }
 
+fn perftest(args: Vec<String>) {
+    let times = 50;
+    println!("Performance testing mode");
+    let mut probs = Vec::new();
+    for fname in &args[1..] {
+        println!("Reading problem {}", fname);
+        let problem = read_problem(fname);
+        probs.push(problem)
+    }
+    for _i in 0..times {
+        for prob in &probs {
+            let copied = prob.clone();
+            solve(copied).unwrap();
+        }
+    }
+    println!("Problems solved: {} problems x {} times", probs.len(), times);
+
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
+    if args.len() > 2 {
+        perftest(args);
+        return;
+    }
 
     let problem = read_problem(&args[1]);
-    println!("Initial problem:");
+    println!("Initial problem: {}", args.len());
     print!("{}", problem.format());
 
     let copied = problem.clone();
     let solved = solve(copied).unwrap();
 
     // Now solve it several more times for benchmark
-    for _i in 0..0 {
+    for _i in 0..50 {
         let copied = problem.clone();
         solve(copied).unwrap();
     }
